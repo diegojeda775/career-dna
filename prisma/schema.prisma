@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  clerkId     String       @unique
+  email       String?
+  name        String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  assessments Assessment[]
+}
+
+enum AssessmentStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Assessment {
+  id          String           @id @default(cuid())
+  userId      String
+  status      AssessmentStatus @default(IN_PROGRESS)
+  // { [questionId]: number | string | null }
+  answers     Json             @default("{}")
+  // Adaptive deep-dive question ids chosen for this person, locked once picked
+  probeIds    String[]         @default([])
+  // Index of the next unanswered question, so people can resume where they left off
+  position    Int              @default(0)
+  // Snapshot of DNA profile + top paths taken at completion (for history lists)
+  profile     Json?
+  results     Json?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  completedAt DateTime?
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}

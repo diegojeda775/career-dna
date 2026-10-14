@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: careerdna
+      POSTGRES_PASSWORD: careerdna
+      POSTGRES_DB: careerdna
+    ports:
+      - "5433:5432"
+    volumes:
+      - careerdna-data:/var/lib/postgresql/data
+volumes:
+  careerdna-data:
