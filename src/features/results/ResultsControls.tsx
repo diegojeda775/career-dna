@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { COMMUTES, DEFAULT_FILTERS, MIN_PAYS, SETUPS, SORTS, type ResultFilters } from "@/features/careers/match";
+import { COMMUTES, DEFAULT_FILTERS, MIN_MATCHES, MIN_PAYS, SETUPS, SORTS, type ResultFilters } from "@/features/careers/match";
 
 const DISCOVERY = ["Familiar", "Balanced", "Hidden gems"];
 
@@ -26,7 +26,8 @@ export function ResultsControls({ filters, discovery }: { filters: ResultFilters
     filters.sort === DEFAULT_FILTERS.sort &&
     filters.setup === DEFAULT_FILTERS.setup &&
     filters.commute === DEFAULT_FILTERS.commute &&
-    filters.minPay === DEFAULT_FILTERS.minPay;
+    filters.minPay === DEFAULT_FILTERS.minPay &&
+    filters.minMatch === DEFAULT_FILTERS.minMatch;
 
   return (
     <div className="mb-6 space-y-4 rounded-xl border bg-card p-4 shadow-sm">
@@ -52,7 +53,7 @@ export function ResultsControls({ filters, discovery }: { filters: ResultFilters
             <button
               onClick={() => {
                 const next = new URLSearchParams(params);
-                ["sort", "setup", "commute", "minPay"].forEach((k) => next.delete(k));
+                ["sort", "setup", "commute", "minPay", "minMatch"].forEach((k) => next.delete(k));
                 const qs = next.toString();
                 startTransition(() => router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false }));
               }}
@@ -64,8 +65,14 @@ export function ResultsControls({ filters, discovery }: { filters: ResultFilters
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Select label="Sort by" value={filters.sort} options={SORTS} onChange={(v) => set("sort", v, DEFAULT_FILTERS.sort)} />
+        <Select
+          label="Minimum match"
+          value={String(filters.minMatch)}
+          options={Object.fromEntries(MIN_MATCHES.map((m) => [String(m), m === 0 ? "Any match %" : `${m}%+ match`]))}
+          onChange={(v) => set("minMatch", Number(v), DEFAULT_FILTERS.minMatch)}
+        />
         <Select
           label="Minimum salary"
           value={String(filters.minPay)}

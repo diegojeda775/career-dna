@@ -1,38 +1,39 @@
 import type { Career, CareerPath } from "./types";
+import { GENERAL_CAREERS, GENERAL_PATHS } from "./data-general";
 
-export const PATHS: CareerPath[] = [
-  { id: "subsea", name: "Subsea & Extreme Trades", tagline: "Skilled trades taken somewhere most people never go" },
-  { id: "energy", name: "Field Energy Tech", tagline: "Keeping the grid and renewables running, often from great heights" },
-  { id: "precision", name: "Precision Machines", tagline: "High-stakes mechanics where a single mistake isn't an option" },
-  { id: "cyber", name: "Cybersecurity & Digital Forensics", tagline: "Get paid to break in, trace attackers and recover evidence" },
-  { id: "forensic", name: "Forensic Investigation", tagline: "Science, numbers and fire that solve real cases" },
-  { id: "data", name: "Data & Prediction", tagline: "Turning messy numbers into the future" },
-  { id: "risk", name: "Risk, Claims & Valuation", tagline: "Pricing the unpredictable and showing up after disasters" },
-  { id: "earth", name: "Weather, Earth & Mapping", tagline: "Reading the planet from storms, rocks, rivers and drones" },
-  { id: "wild", name: "Wildlife & Conservation", tagline: "Careers spent in wild places protecting what lives there" },
-  { id: "animals", name: "Animal Careers Beyond the Vet", tagline: "Hands-on animal work without the eight years of school" },
-  { id: "response", name: "Sky & Wild Response", tagline: "Rescue, firefighting and flying where roads don't go" },
-  { id: "command", name: "Command & Control", tagline: "Staying calm while you run the whole system" },
-  { id: "logistics", name: "Supply Chain & Operations", tagline: "Making sure the world's stuff gets where it's going" },
-  { id: "imaging", name: "Hidden Healthcare Tech", tagline: "High-paying hospital roles that aren't doctor or nurse" },
-  { id: "clinical", name: "Clinical Craft & Counseling", tagline: "Where medicine meets the hands, the head and the heart" },
-  { id: "lab", name: "Field & Lab Science", tagline: "Real discovery, from microbes to mountains" },
-  { id: "flavor", name: "Food & Flavor Science", tagline: "Where chemistry, craft and appetite meet" },
-  { id: "therapy", name: "Healing Through Play & Purpose", tagline: "Helping people recover through activity, music and play" },
-  { id: "deathcare", name: "Death Care & Ceremony", tagline: "Calm, steady service at the moments that matter most" },
-  { id: "sound", name: "Sound, Light & Live Production", tagline: "The invisible artists behind every show and film" },
-  { id: "restoration", name: "Visual Craft & Restoration", tagline: "Art skills put to scientific, medical and cinematic work" },
-  { id: "craft", name: "Master Craft & Making", tagline: "Making precious, precise things by hand" },
-  { id: "games", name: "Games & Interactive Design", tagline: "Designing the experiences people play and tap through" },
-  { id: "words", name: "Words, Language & Archives", tagline: "Language skills put to specialized, well-paid work" },
-  { id: "insight", name: "Human Insight & Intelligence", tagline: "Figuring out why people do what they do" },
-  { id: "dealmaking", name: "Deal-making & Representation", tagline: "Persuasion as a profession, with real stakes" },
-  { id: "teaching", name: "Teaching Beyond the Classroom", tagline: "Teaching adults, teams and adventurers" },
-  { id: "compliance", name: "Order, Records & Compliance", tagline: "Quiet, precise and often remote-friendly" },
-  { id: "spaces", name: "Designing Places", tagline: "Shaping the landscapes and neighborhoods people live in" },
+const NICHE_PATHS: CareerPath[] = [
+  { id: "subsea", field: "trades", name: "Subsea & Extreme Trades", tagline: "Skilled trades taken somewhere most people never go" },
+  { id: "energy", field: "trades", name: "Field Energy Tech", tagline: "Keeping the grid and renewables running, often from great heights" },
+  { id: "precision", field: "trades", name: "Precision Machines", tagline: "High-stakes mechanics where a single mistake isn't an option" },
+  { id: "cyber", field: "tech", name: "Cybersecurity & Digital Forensics", tagline: "Get paid to break in, trace attackers and recover evidence" },
+  { id: "forensic", field: "public", name: "Forensic Investigation", tagline: "Science, numbers and fire that solve real cases" },
+  { id: "data", field: "tech", name: "Data & Prediction", tagline: "Turning messy numbers into the future" },
+  { id: "risk", field: "business", name: "Risk, Claims & Valuation", tagline: "Pricing the unpredictable and showing up after disasters" },
+  { id: "earth", field: "science", name: "Weather, Earth & Mapping", tagline: "Reading the planet from storms, rocks, rivers and drones" },
+  { id: "wild", field: "science", name: "Wildlife & Conservation", tagline: "Careers spent in wild places protecting what lives there" },
+  { id: "animals", field: "agri", name: "Animal Careers Beyond the Vet", tagline: "Hands-on animal work without the eight years of school" },
+  { id: "response", field: "public", name: "Sky & Wild Response", tagline: "Rescue, firefighting and flying where roads don't go" },
+  { id: "command", field: "transport", name: "Command & Control", tagline: "Staying calm while you run the whole system" },
+  { id: "logistics", field: "transport", name: "Supply Chain & Operations", tagline: "Making sure the world's stuff gets where it's going" },
+  { id: "imaging", field: "health", name: "Hidden Healthcare Tech", tagline: "High-paying hospital roles that aren't doctor or nurse" },
+  { id: "clinical", field: "health", name: "Clinical Craft & Counseling", tagline: "Where medicine meets the hands, the head and the heart" },
+  { id: "lab", field: "science", name: "Field & Lab Science", tagline: "Real discovery, from microbes to mountains" },
+  { id: "flavor", field: "science", name: "Food & Flavor Science", tagline: "Where chemistry, craft and appetite meet" },
+  { id: "therapy", field: "health", name: "Healing Through Play & Purpose", tagline: "Helping people recover through activity, music and play" },
+  { id: "deathcare", field: "hospitality", name: "Death Care & Ceremony", tagline: "Calm, steady service at the moments that matter most" },
+  { id: "sound", field: "creative", name: "Sound, Light & Live Production", tagline: "The invisible artists behind every show and film" },
+  { id: "restoration", field: "creative", name: "Visual Craft & Restoration", tagline: "Art skills put to scientific, medical and cinematic work" },
+  { id: "craft", field: "creative", name: "Master Craft & Making", tagline: "Making precious, precise things by hand" },
+  { id: "games", field: "creative", name: "Games & Interactive Design", tagline: "Designing the experiences people play and tap through" },
+  { id: "words", field: "creative", name: "Words, Language & Archives", tagline: "Language skills put to specialized, well-paid work" },
+  { id: "insight", field: "science", name: "Human Insight & Intelligence", tagline: "Figuring out why people do what they do" },
+  { id: "dealmaking", field: "sales", name: "Deal-making & Representation", tagline: "Persuasion as a profession, with real stakes" },
+  { id: "teaching", field: "education", name: "Teaching Beyond the Classroom", tagline: "Teaching adults, teams and adventurers" },
+  { id: "compliance", field: "business", name: "Order, Records & Compliance", tagline: "Quiet, precise and often remote-friendly" },
+  { id: "spaces", field: "engineering", name: "Designing Places", tagline: "Shaping the landscapes and neighborhoods people live in" },
 ];
 
-export const CAREERS: Career[] = [
+const NICHE_CAREERS: Career[] = [
   // ───────── Subsea & Extreme Trades
   {
     id: "underwater-welder", title: "Underwater Welder", path: "subsea",
@@ -81,7 +82,7 @@ export const CAREERS: Career[] = [
     soc: "47-2231", socTitle: "Solar Photovoltaic Installers",
     summary: "Assemble, install and maintain solar panel systems on rooftops and large solar farms.",
     tasks: ["Mount racking and panels", "Connect inverters and wiring", "Test and commission new systems"],
-    pay: 48800, growth: 48, education: "On-the-job training or short certificate", eduLevel: 1,
+    pay: 48800, growth: 48, education: "On-the-job training or short certificate", eduLevel: 0,
     start: ["Get hired as an installer helper", "Earn NABCEP PV Associate credential", "Grow toward electrician licensing"],
     remote: 0, schedule: "standard", travel: 1, physical: 2, outdoor: 2, danger: 1, obscurity: 0.35,
     dna: { hands_on: 0.9, mechanical: 0.7, physical: 0.85, nature: 0.55, adrenaline: 0.45, structure: 0.6 },
@@ -133,7 +134,7 @@ export const CAREERS: Career[] = [
     soc: "49-9094", socTitle: "Locksmiths and Safe Repairers",
     summary: "Open, repair and install locks, safes and electronic access systems for homes, banks and businesses.",
     tasks: ["Open safes and vaults without damage", "Install access control systems", "Respond to lockout calls"],
-    pay: 50000, growth: -2, education: "On-the-job training or short course", eduLevel: 1,
+    pay: 50000, growth: -2, education: "On-the-job training or short course", eduLevel: 0,
     start: ["Apprentice with a locksmith shop", "Get licensed where your state requires it", "Earn ALOA certifications"],
     remote: 0, schedule: "irregular", travel: 1, physical: 1, outdoor: 1, danger: 0, obscurity: 0.45,
     dna: { mechanical: 0.95, hands_on: 0.9, detail: 0.8, autonomy: 0.75, variety: 0.6, investigative: 0.3 },
@@ -355,7 +356,7 @@ export const CAREERS: Career[] = [
     soc: "37-3013", socTitle: "Tree Trimmers and Pruners",
     summary: "Climb giant trees with ropes and saws to prune, remove and care for them.",
     tasks: ["Climb and rig trees safely", "Diagnose tree health", "Remove hazardous limbs"],
-    pay: 49000, growth: 4, education: "On-the-job training + ISA certification", eduLevel: 1,
+    pay: 49000, growth: 4, education: "On-the-job training + ISA certification", eduLevel: 0,
     start: ["Join a tree crew as a groundworker", "Learn rope-and-saddle climbing", "Earn ISA Certified Arborist"],
     remote: 0, schedule: "standard", travel: 1, physical: 2, outdoor: 2, danger: 2, obscurity: 0.55,
     dna: { nature: 0.9, physical: 1, adrenaline: 0.85, hands_on: 0.85, autonomy: 0.5, investigative: 0.3 },
@@ -601,7 +602,7 @@ export const CAREERS: Career[] = [
     soc: "51-3092", socTitle: "Food Batchmakers",
     summary: "Brew beer, kombucha, cider or cultured foods by managing fermentation as both craft and science.",
     tasks: ["Brew and ferment batches", "Monitor quality and sanitation", "Develop new recipes"],
-    pay: 39000, growth: 6, education: "On-the-job or brewing certificate", eduLevel: 1,
+    pay: 39000, growth: 6, education: "On-the-job or brewing certificate", eduLevel: 0,
     start: ["Homebrew seriously", "Take a brewing science certificate", "Start as a cellar worker"],
     remote: 0, schedule: "shifts", travel: 0, physical: 2, outdoor: 0, danger: 0, obscurity: 0.4,
     dna: { hands_on: 0.85, creative: 0.65, investigative: 0.5, physical: 0.65, detail: 0.6, mechanical: 0.45 },
@@ -981,6 +982,9 @@ export const CAREERS: Career[] = [
     dna: { abstract: 0.9, organizing: 0.6, helping: 0.5, analytical: 0.6, persuading: 0.45, words: 0.5, social: 0.55 },
   },
 ];
+
+export const PATHS: CareerPath[] = [...NICHE_PATHS, ...GENERAL_PATHS];
+export const CAREERS: Career[] = [...NICHE_CAREERS, ...GENERAL_CAREERS];
 
 export const PATH_BY_ID = new Map(PATHS.map((p) => [p.id, p]));
 export const CAREER_BY_ID = new Map(CAREERS.map((c) => [c.id, c]));

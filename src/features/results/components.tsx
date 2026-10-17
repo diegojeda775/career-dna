@@ -1,14 +1,12 @@
 import { ArrowUpRight, Briefcase, Clock, GraduationCap, Laptop, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { DIMENSIONS, DIM_KEYS, type Dim } from "@/features/dna/dimensions";
 import type { Profile } from "@/features/dna/profile";
-import type { CareerMatch, PathMatch } from "@/features/careers/match";
+import type { CareerMatch } from "@/features/careers/match";
 import { blsUrl, myNextMoveUrl } from "@/features/careers/types";
 import { cn } from "@/lib/utils";
 
-const money = (n: number) => `$${Math.round(n / 1000)}k`;
-
 // Approximate BLS outlook wording (average growth across all occupations is ~4% for 2023–33)
-function outlook(growth: number) {
+export function outlook(growth: number) {
   if (growth >= 10) return "Much faster than average";
   if (growth >= 5) return "Faster than average";
   if (growth >= 2) return "About average";
@@ -87,27 +85,7 @@ export function WorkType({ type }: { type: Profile["type"] }) {
   );
 }
 
-export function PathCard({ match, rank }: { match: PathMatch; rank: number }) {
-  return (
-    <section className="rounded-xl border bg-card shadow-sm">
-      <header className="flex items-start justify-between gap-4 border-b p-5">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-primary">Path {rank}</p>
-          <h3 className="mt-1 text-xl font-semibold">{match.path.name}</h3>
-          <p className="text-sm text-muted-foreground">{match.path.tagline}</p>
-        </div>
-        <MatchBadge score={match.score} />
-      </header>
-      <div className="divide-y">
-        {match.careers.map((c, i) => (
-          <CareerDetails key={c.career.id} match={c} open={i === 0} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function MatchBadge({ score, small }: { score: number; small?: boolean }) {
+export function MatchBadge({ score, small }: { score: number; small?: boolean }) {
   return (
     <div className={cn("shrink-0 text-right", small && "flex items-baseline gap-1")}>
       <p className={cn("font-semibold tabular-nums", small ? "text-sm" : "text-2xl")}>{score}%</p>
@@ -116,25 +94,30 @@ function MatchBadge({ score, small }: { score: number; small?: boolean }) {
   );
 }
 
-function CareerDetails({ match, open }: { match: CareerMatch; open: boolean }) {
+export const money = (n: number) => `$${Math.round(n / 1000)}k`;
+export const isHiddenGem = (m: CareerMatch) => m.career.obscurity >= 0.7;
+
+export function HiddenGem() {
+  return <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">Hidden gem</span>;
+}
+
+// Everything we know about one career; shown in the side panel
+export function CareerFull({ match }: { match: CareerMatch }) {
   const c = match.career;
-  const hidden = c.obscurity >= 0.7;
   return (
-    <details open={open} className="group p-5 [&_summary::-webkit-details-marker]:hidden">
-      <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
+    <div>
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="flex flex-wrap items-center gap-2 font-semibold">
+          <p className="flex flex-wrap items-center gap-2 text-xl font-semibold">
             {c.title}
-            {hidden && (
-              <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">Hidden gem</span>
-            )}
+            {isHiddenGem(match) && <HiddenGem />}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">{c.summary}</p>
         </div>
-        <MatchBadge score={match.score} small />
-      </summary>
+        <MatchBadge score={match.score} />
+      </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-3">
         <Stat icon={<Wallet />} label="Median pay" value={money(c.pay)} sub="per year" />
         <Stat
           icon={c.growth >= 0 ? <TrendingUp /> : <TrendingDown />}
@@ -142,7 +125,7 @@ function CareerDetails({ match, open }: { match: CareerMatch; open: boolean }) {
           value={`${c.growth > 0 ? "+" : ""}${c.growth}%`}
           sub={outlook(c.growth)}
         />
-        <Stat icon={<GraduationCap />} label="Training" value={["", "Months", "1–2 yrs", "4-yr degree", "Graduate"][c.eduLevel]!} sub={c.education} />
+        <Stat icon={<GraduationCap />} label="Training" value={EDUCATION[c.eduLevel]} sub={c.education} />
         <Stat
           icon={c.remote === 2 ? <Laptop /> : <Clock />}
           label="Setup"
@@ -151,55 +134,53 @@ function CareerDetails({ match, open }: { match: CareerMatch; open: boolean }) {
         />
       </div>
 
-      <div className="mt-5 grid gap-5 sm:grid-cols-2">
-        <div>
-          {match.reasons.length > 0 && (
-            <Block title="Why it fits your DNA">
-              {match.reasons.map((d) => (
-                <li key={d}>
-                  <span className="font-medium">{DIMENSIONS[d].label}</span>: {DIMENSIONS[d].blurb.toLowerCase()}
-                </li>
-              ))}
-            </Block>
-          )}
-          {match.watchouts.length > 0 && (
-            <Block title="Heads up" className="mt-4">
-              {match.watchouts.map((d) => (
-                <li key={d}>
-                  Leans on <span className="font-medium">{DIMENSIONS[d].label.toLowerCase()}</span>, which you were lukewarm about
-                </li>
-              ))}
-            </Block>
-          )}
-          <Block title="A day might include" className="mt-4">
-            {c.tasks.map((t) => (
-              <li key={t}>{t}</li>
+      <div className="mt-5 space-y-4">
+        {match.reasons.length > 0 && (
+          <Block title="Why it fits your DNA">
+            {match.reasons.map((d) => (
+              <li key={d}>
+                <span className="font-medium">{DIMENSIONS[d].label}</span>: {DIMENSIONS[d].blurb.toLowerCase()}
+              </li>
             ))}
           </Block>
-        </div>
-        <div>
-          <Block title="How to break in" ordered>
-            {c.start.map((s) => (
-              <li key={s}>{s}</li>
+        )}
+        {match.watchouts.length > 0 && (
+          <Block title="Heads up">
+            {match.watchouts.map((d) => (
+              <li key={d}>
+                Leans on <span className="font-medium">{DIMENSIONS[d].label.toLowerCase()}</span>, which didn't interest you much
+              </li>
             ))}
           </Block>
-          <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-            <a href={myNextMoveUrl(c)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
-              My Next Move <ArrowUpRight className="size-3.5" />
-            </a>
-            <a href={blsUrl(c)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
-              BLS wage data <ArrowUpRight className="size-3.5" />
-            </a>
-          </div>
-          <p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
-            <Briefcase className="mt-0.5 size-3.5 shrink-0" />
-            Stats from parent occupation: {c.socTitle} (SOC {c.soc})
-          </p>
+        )}
+        <Block title="A day might include">
+          {c.tasks.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </Block>
+        <Block title="How to break in" ordered>
+          {c.start.map((s) => (
+            <li key={s}>{s}</li>
+          ))}
+        </Block>
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          <a href={myNextMoveUrl(c)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+            My Next Move <ArrowUpRight className="size-3.5" />
+          </a>
+          <a href={blsUrl(c)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+            BLS wage data <ArrowUpRight className="size-3.5" />
+          </a>
         </div>
+        <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+          <Briefcase className="mt-0.5 size-3.5 shrink-0" />
+          Stats from parent occupation: {c.socTitle} (SOC {c.soc})
+        </p>
       </div>
-    </details>
+    </div>
   );
 }
+
+export const EDUCATION = ["None needed", "Months", "1–2 yrs", "4-yr degree", "Graduate"] as const;
 
 function Stat({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {
   return (

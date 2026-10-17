@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
-import { ArrowLeft, Check, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DIMENSIONS, DIM_KEYS } from "@/features/dna/dimensions";
@@ -99,6 +99,7 @@ export function Questionnaire({ assessmentId, initialAnswers, initialPosition, i
     function onKey(e: KeyboardEvent) {
       if (atEnd || showDeepDiveIntro || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === "Backspace" && index > 0) return back();
+      if (e.key === "Enter" && question.id in answers) return answer(answers[question.id] ?? null);
       if (question.kind === "choice") {
         const i = "abcdefg".indexOf(e.key.toLowerCase());
         if (i >= 0 && question.options[i]) answer(question.options[i]!.value);
@@ -116,6 +117,7 @@ export function Questionnaire({ assessmentId, initialAnswers, initialPosition, i
   const sectionQuestions = sequence.filter((q) => q.section === question.section);
   const sectionIndex = sectionQuestions.findIndex((q) => q.id === question.id);
   const progress = Math.round((answeredCount / TOTAL_QUESTIONS) * 100);
+  const isRevisit = question.id in answers;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -157,21 +159,32 @@ export function Questionnaire({ assessmentId, initialAnswers, initialPosition, i
 
           <QuestionBody key={question.id} question={question} value={answers[question.id]} onAnswer={answer} />
 
-          <div className="mt-8 flex items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={back} disabled={index === 0}>
+          {/* Revisited questions get a Next button so the existing answer can be kept as-is */}
+          <div className="mt-8 grid grid-cols-3 items-center">
+            <Button variant="ghost" size="sm" className="justify-self-start" onClick={back} disabled={index === 0}>
               <ArrowLeft /> Back
             </Button>
             {question.kind !== "choice" && (
-              <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => answer(null)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn("text-muted-foreground", isRevisit ? "col-start-2 justify-self-center" : "col-start-3 justify-self-end")}
+                onClick={() => answer(null)}
+              >
                 Skip / not sure
+              </Button>
+            )}
+            {isRevisit && (
+              <Button size="sm" className="col-start-3 justify-self-end" onClick={() => answer(answers[question.id] ?? null)}>
+                Next <ArrowRight />
               </Button>
             )}
           </div>
         </div>
       )}
       <p className="mt-4 text-center text-xs text-muted-foreground">
-        Tip: use keys {question.kind === "choice" ? "A–E" : "1–5"} to answer and Backspace to go back. Progress saves
-        automatically.
+        Tip: use keys {question.kind === "choice" ? "A–E" : "1–5"} to answer, Enter for next and Backspace to go back.
+        Progress saves automatically.
       </p>
     </div>
   );
@@ -251,7 +264,7 @@ function QuestionBody({
   const labels = SCALE_LABELS[question.scale];
   return (
     <div>
-      {question.scale === "energy" && <p className="text-sm text-muted-foreground">A full afternoon of…</p>}
+      {question.scale !== "agree" && <p className="text-sm text-muted-foreground">A full afternoon of…</p>}
       <h2 className="mt-1 text-xl font-semibold leading-snug sm:text-2xl">{question.text}</h2>
       <div className="mt-6 grid grid-cols-5 gap-2" role="radiogroup" aria-label={question.text}>
         {SCALE_VALUES.map((v, i) => (

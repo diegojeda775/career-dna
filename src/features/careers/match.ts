@@ -17,7 +17,10 @@ export type PathMatch = {
 };
 
 export type MatchResult = {
+  // Every path with at least one surviving career, best first (or by the chosen sort)
   paths: PathMatch[];
+  // Every surviving career, for the by-field view
+  careers: CareerMatch[];
   filtered: { total: number; removed: number; byReason: { reason: string; count: number }[] };
 };
 
@@ -41,7 +44,10 @@ const FILTERS: { reason: string; fails: (c: Career, k: Profile["constraints"]) =
     fails: (c, k) => (k.schedule === "standard" && c.schedule !== "standard") || (k.schedule === "shifts" && c.schedule === "irregular"),
   },
   { reason: "Too much training required", fails: (c, k) => k.education != null && c.eduLevel > Number(k.education) },
-  { reason: "Too physically demanding", fails: (c, k) => k.physical === "desk" && c.physical === 2 },
+  {
+    reason: "Too physically demanding",
+    fails: (c, k) => (k.physical === "desk" && c.physical >= 1) || (k.physical === "mix" && c.physical === 2),
+  },
   { reason: "Physical danger", fails: (c, k) => k.danger === "none" && c.danger === 2 },
   { reason: "Outdoors in all weather", fails: (c, k) => k.outdoor === "indoor" && c.outdoor === 2 },
   { reason: "Medical procedures", fails: (c, k) => k.medical === "no" && !!c.medical },
@@ -60,26 +66,30 @@ export const SETUPS = {
 } as const;
 export const COMMUTES = { any: "Any travel", home: "Home every night", travel: "Travel-heavy" } as const;
 export const MIN_PAYS = [0, 40000, 60000, 80000, 100000] as const;
+export const MIN_MATCHES = [0, 50, 60, 70, 80, 90] as const;
 
 export type ResultFilters = {
   sort: keyof typeof SORTS;
   setup: keyof typeof SETUPS;
   commute: keyof typeof COMMUTES;
   minPay: number;
+  minMatch: number;
 };
 
-export const DEFAULT_FILTERS: ResultFilters = { sort: "match", setup: "any", commute: "any", minPay: 0 };
+export const DEFAULT_FILTERS: ResultFilters = { sort: "match", setup: "any", commute: "any", minPay: 0, minMatch: 0 };
 
 const pick = <T extends string>(value: string | undefined, options: Record<T, string>, fallback: T) =>
   value != null && value in options ? (value as T) : fallback;
 
 export function parseFilters(params: Record<string, string | undefined>): ResultFilters {
   const minPay = Number(params.minPay);
+  const minMatch = Number(params.minMatch);
   return {
     sort: pick(params.sort, SORTS, "match"),
     setup: pick(params.setup, SETUPS, "any"),
     commute: pick(params.commute, COMMUTES, "any"),
     minPay: (MIN_PAYS as readonly number[]).includes(minPay) ? minPay : 0,
+    minMatch: (MIN_MATCHES as readonly number[]).includes(minMatch) ? minMatch : 0,
   };
 }
 
@@ -152,40 +162,45 @@ export function matchCareers(
   profile: Profile,
   discovery = Number(profile.constraints.discovery ?? 1),
   filters: ResultFilters = DEFAULT_FILTERS,
-  limit = 5,
 ): MatchResult {
   const byReason = new Map<string, number>();
+  const count = (reason: string) => byReason.set(reason, (byReason.get(reason) ?? 0) + 1);
   const eligible: Career[] = [];
   for (const c of CAREERS) {
     const failed =
       FILTERS.find((f) => f.fails(c, profile.constraints)) ?? RESULT_FILTERS.find((f) => f.fails(c, filters));
-    if (failed) byReason.set(failed.reason, (byReason.get(failed.reason) ?? 0) + 1);
+    if (failed) count(failed.reason);
     else eligible.push(c);
   }
 
   // Like a recommendation feed: lean toward or away from obscure careers
   const discoveryBoost = [-0.03, 0.015, 0.05][discovery] ?? 0.015;
-  const scored = eligible
-    .map((c) => scoreCareer(profile, c))
-    .map((m) => ({ ...m, score: m.score + discoveryBoost * (m.career.obscurity - 0.5) * 2 }));
+  const scored: (CareerMatch & { raw: number })[] = [];
+  for (const c of eligible) {
+    const m = scoreCareer(profile, c);
+    const raw = m.score + discoveryBoost * (c.obscurity - 0.5) * 2;
+    const score = toPercent(raw);
+    if (score < filters.minMatch) count("Below your match threshold");
+    else scored.push({ ...m, raw, score });
+  }
 
   // Group into paths; a path is as strong as its best career, plus a little depth
-  const groups = new Map<string, CareerMatch[]>();
+  const groups = new Map<string, typeof scored>();
   for (const m of scored) groups.set(m.career.path, [...(groups.get(m.career.path) ?? []), m]);
   const candidates = [...groups.entries()].map(([id, matches]) => {
-    matches.sort((a, b) => b.score - a.score);
-    const depth = matches.length > 1 ? matches[1]!.score : matches[0]!.score;
+    matches.sort((a, b) => b.raw - a.raw);
+    const depth = matches.length > 1 ? matches[1]!.raw : matches[0]!.raw;
     const centroid = matches.reduce(
       (acc, m) => acc.map((x, i) => x + centered(VECTORS.get(m.career.id)!)[i]! / matches.length),
       DIM_KEYS.map(() => 0),
     );
-    return { path: PATH_BY_ID.get(id)!, careers: matches, raw: matches[0]!.score * 0.8 + depth * 0.2, centroid };
+    return { path: PATH_BY_ID.get(id)!, careers: matches, raw: matches[0]!.raw * 0.8 + depth * 0.2, centroid };
   });
 
-  // Diversify (maximal marginal relevance) so the 5 paths aren't near-duplicates
+  // Diversify (maximal marginal relevance) so the top paths aren't near-duplicates
   const picked: typeof candidates = [];
   const pool = [...candidates];
-  while (picked.length < limit && pool.length) {
+  while (pool.length) {
     let bestIdx = 0;
     let bestVal = -Infinity;
     pool.forEach((cand, i) => {
@@ -199,25 +214,22 @@ export function matchCareers(
     picked.push(pool.splice(bestIdx, 1)[0]!);
   }
 
-  // Matching decides WHICH paths you see; the sort only decides their order
+  // Matching decides the default order; another sort just reorders
   const key = SORT_KEY[filters.sort];
+  const strip = ({ raw: _raw, ...m }: (typeof scored)[number]): CareerMatch => m;
   const paths = picked.map((p) => ({
     path: p.path,
     score: toPercent(p.raw),
-    careers: p.careers
-      .map((m) => ({ ...m, score: toPercent(m.score) }))
-      // Keep siblings only when they're genuinely close to the path's best fit
-      .filter((m, i, all) => i === 0 || m.score >= Math.max(40, all[0]!.score - 30))
-      .slice(0, 3)
-      .sort((a, b) => key(b) - key(a)),
+    careers: p.careers.map(strip).sort((a, b) => key(b) - key(a)),
   }));
   if (filters.sort !== "match") paths.sort((a, b) => key(b.careers[0]!) - key(a.careers[0]!));
 
   return {
     paths,
+    careers: scored.map(strip).sort((a, b) => key(b) - key(a)),
     filtered: {
       total: CAREERS.length,
-      removed: CAREERS.length - eligible.length,
+      removed: CAREERS.length - scored.length,
       byReason: [...byReason.entries()].map(([reason, count]) => ({ reason, count })).sort((a, b) => b.count - a.count),
     },
   };

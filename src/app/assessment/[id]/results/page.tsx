@@ -9,7 +9,8 @@ import { matchCareers, parseFilters } from "@/features/careers/match";
 import { DATA_NOTE } from "@/features/careers/types";
 import { sanitizeAnswers } from "@/features/assessment/sequence";
 import { retakeAssessment } from "@/features/assessment/actions";
-import { DnaChart, PathCard, WorkType } from "@/features/results/components";
+import { DnaChart, WorkType } from "@/features/results/components";
+import { ResultsExplorer } from "@/features/results/ResultsExplorer";
 import { ResultsControls } from "@/features/results/ResultsControls";
 
 export default async function ResultsPage({
@@ -49,8 +50,8 @@ export default async function ResultsPage({
           </p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight">Your Career DNA</h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            You light up with <Em>{DIMENSIONS[strengths[0]!].label}</Em>, <Em>{DIMENSIONS[strengths[1]!].label}</Em> and{" "}
-            <Em>{DIMENSIONS[strengths[2]!].label}</Em>, and you're drained by{" "}
+            You're most drawn to <Em>{DIMENSIONS[strengths[0]!].label}</Em>, <Em>{DIMENSIONS[strengths[1]!].label}</Em> and{" "}
+            <Em>{DIMENSIONS[strengths[2]!].label}</Em>, and least interested in{" "}
             {drains.map((d, i) => (
               <span key={d}>
                 {i > 0 && (i === drains.length - 1 ? " and " : ", ")}
@@ -70,7 +71,7 @@ export default async function ResultsPage({
       <section className="grid gap-6 lg:grid-cols-[1fr_280px]">
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <h2 className="font-semibold">Working attributes</h2>
-          <p className="mb-5 text-sm text-muted-foreground">0–100. The center line is neutral; right of it energizes you.</p>
+          <p className="mb-5 text-sm text-muted-foreground">0–100. The center line is neutral; right of it means more interest.</p>
           <DnaChart profile={profile} />
         </div>
         <div className="space-y-6">
@@ -98,13 +99,7 @@ export default async function ResultsPage({
       </section>
 
       <section>
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">Your {result.paths.length} best-fit paths</h2>
-            <p className="text-sm text-muted-foreground">Each path groups niche careers that share your DNA.</p>
-          </div>
-        </div>
-
+        <h2 className="mb-4 text-2xl font-semibold tracking-tight">Your matches</h2>
         <ResultsControls filters={filters} discovery={discovery} />
 
         {result.filtered.removed > 0 && (
@@ -114,7 +109,7 @@ export default async function ResultsPage({
               Your dealbreakers and filters ruled out {result.filtered.removed} of {result.filtered.total} careers
               {result.filtered.byReason.length > 0 &&
                 ` (${result.filtered.byReason.map((r) => `${r.reason.toLowerCase()}: ${r.count}`).join(", ")})`}
-              .{result.paths.length < 5 && " Loosening a filter above (or a dealbreaker on a retake) will open up more paths."}
+              .{result.careers.length < 15 && " Loosening a filter above (or a dealbreaker on a retake) will open up more careers."}
             </p>
           </div>
         )}
@@ -124,11 +119,7 @@ export default async function ResultsPage({
             No careers survive every dealbreaker and filter. Try loosening a filter above.
           </p>
         ) : (
-          <div className="space-y-6">
-            {result.paths.map((p, i) => (
-              <PathCard key={p.path.id} match={p} rank={i + 1} />
-            ))}
-          </div>
+          <ResultsExplorer paths={result.paths} careers={result.careers} />
         )}
         <p className="mt-6 text-xs text-muted-foreground">{DATA_NOTE}</p>
       </section>

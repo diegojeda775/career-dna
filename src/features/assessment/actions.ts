@@ -65,7 +65,7 @@ export async function completeAssessment(id: string, rawAnswers: unknown) {
       completedAt: new Date(),
       profile: { type: profile.type.letters, scores: profile.scores },
       results: {
-        paths: match.paths.map((p) => ({
+        paths: match.paths.slice(0, 5).map((p) => ({
           id: p.path.id,
           name: p.path.name,
           score: p.score,

@@ -27,8 +27,8 @@ export const SECTIONS: Record<SectionId, { title: string; intro: string }> = {
     intro: "Start with the hard lines. These filter out whole industries before we look for a match. Salary, remote work and travel come later, as filters on your results.",
   },
   energy: {
-    title: "Energy or drain",
-    intro: "Picture yourself spending a full afternoon on each task. Don't worry about skill or training. Would it charge you up or wear you out?",
+    title: "What intrigues you",
+    intro: "Picture yourself spending a full afternoon on each task. Don't worry about skill or training. How interested would you be?",
   },
   wiring: {
     title: "How you're wired",
@@ -45,7 +45,9 @@ export const SECTIONS: Record<SectionId, { title: string; intro: string }> = {
 };
 
 export const SCALE_LABELS = {
-  energy: ["Drains me", "Tiring", "Neutral", "Enjoyable", "Energizes me"],
+  energy: ["Not for me", "Not really", "Neutral", "Interested", "Intriguing!"],
+  // For high-pressure tasks, "interesting" isn't the real question; tolerance for stress is
+  stress: ["Way too stressful", "Too stressful", "Not sure", "A good challenge", "I'd thrive on it"],
   agree: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"],
 } as const;
 
@@ -83,8 +85,8 @@ export type Question =
       options: ChoiceOption[];
     };
 
-const energy = (id: string, cluster: CopsCluster, text: string, weights: DnaWeights): Question => ({
-  id, section: "energy", kind: "scale", scale: "energy", text, weights, cluster,
+const energy = (id: string, cluster: CopsCluster, text: string, weights: DnaWeights, scale: keyof typeof SCALE_LABELS = "energy"): Question => ({
+  id, section: "energy", kind: "scale", scale, text, weights, cluster,
 });
 const spectrum = (id: string, left: string, right: string, weights: DnaWeights): Question => ({
   id, section: "wiring", kind: "spectrum", left, right, weights,
@@ -92,8 +94,8 @@ const spectrum = (id: string, left: string, right: string, weights: DnaWeights):
 const agree = (id: string, text: string, weights: DnaWeights): Question => ({
   id, section: "world", kind: "scale", scale: "agree", text, weights,
 });
-const probe = (id: string, dims: Dim[], text: string, weights: DnaWeights): Question => ({
-  id, section: "deep", kind: "scale", scale: "energy", text, weights, probe: dims,
+const probe = (id: string, dims: Dim[], text: string, weights: DnaWeights, scale: keyof typeof SCALE_LABELS = "energy"): Question => ({
+  id, section: "deep", kind: "scale", scale, text, weights, probe: dims,
 });
 
 export const DEALBREAKERS: Question[] = [
@@ -110,7 +112,8 @@ export const DEALBREAKERS: Question[] = [
     id: "d_education", section: "dealbreakers", kind: "choice", constraint: "education",
     text: "How much training are you willing to do before your first paycheck in a new field?",
     options: [
-      { value: "1", label: "Months, not years (short certificate or on-the-job)" },
+      { value: "0", label: "None. I want to start earning right away and learn on the job" },
+      { value: "1", label: "Months, not years (short certificate or course)" },
       { value: "2", label: "Up to ~2 years (apprenticeship, associate degree, academy)" },
       { value: "3", label: "A 4-year degree is fine" },
       { value: "4", label: "Graduate school is fine" },
@@ -121,7 +124,8 @@ export const DEALBREAKERS: Question[] = [
     text: "How physical can the work be?",
     options: [
       { value: "desk", label: "Mostly seated, please", weights: { physical: -0.8 } },
-      { value: "moderate", label: "On my feet and moving around is fine" },
+      { value: "mix", label: "A mix of sitting and standing", weights: { physical: -0.3 } },
+      { value: "moderate", label: "On my feet and moving around most of the day is fine" },
       { value: "heavy", label: "Bring on lifting, climbing and sweat", weights: { physical: 0.8, hands_on: 0.2 } },
     ],
   },
@@ -192,7 +196,7 @@ export const ENERGY: Question[] = [
   energy("e21", "CE", "Perfecting a recipe through a dozen small tweaks", { creative: 0.6, hands_on: 0.6, detail: 0.5, investigative: 0.3 }),
   energy("e22", "CE", "Planning a week of meals around someone's strict dietary needs", { helping: 0.6, organizing: 0.5, investigative: 0.3 }),
   energy("e23", "CE", "Altering a garment so it fits someone perfectly", { hands_on: 0.8, detail: 0.8, creative: 0.4 }),
-  energy("e24", "CE", "Working a busy kitchen line during the dinner rush", { pressure: 0.9, physical: 0.6, hands_on: 0.6, social: 0.3 }),
+  energy("e24", "CE", "Working a busy kitchen line during the dinner rush", { pressure: 0.9, physical: 0.6, hands_on: 0.6, social: 0.3 }, "stress"),
   // Outdoor
   energy("e25", "OD", "Tracking a wild animal's movements across a forest", { nature: 1, animals: 0.8, investigative: 0.4, autonomy: 0.4 }),
   energy("e26", "OD", "Planting and caring for 200 trees on a hillside", { nature: 0.9, physical: 0.8, hands_on: 0.6 }),
@@ -240,7 +244,7 @@ export const ENERGY: Question[] = [
   energy("e61", "VP", "Helping a family understand a complicated medical diagnosis", { helping: 0.9, empathy: 0.7, words: 0.5, investigative: 0.3 }),
   energy("e62", "VP", "Designing a therapy plan to help someone walk again", { helping: 0.9, investigative: 0.4, hands_on: 0.4, physical: 0.3 }),
   // Service · Skilled
-  energy("e63", "VS", "Arriving first at an emergency and taking charge", { pressure: 1, adrenaline: 0.8, helping: 0.7, leading: 0.4 }),
+  energy("e63", "VS", "Arriving first at an emergency and taking charge", { pressure: 1, adrenaline: 0.8, helping: 0.7, leading: 0.4 }, "stress"),
   energy("e64", "VS", "Guiding a group of travelers through a new city", { social: 0.9, travel: 0.7, visibility: 0.5, variety: 0.6 }),
   energy("e65", "VS", "Making a stranger feel welcome and cared for", { helping: 0.8, social: 0.8, empathy: 0.6 }),
   energy("e66", "VS", "Patrolling a site and keeping people safe", { adrenaline: 0.6, physical: 0.5, pressure: 0.5, leading: 0.3 }),
@@ -332,7 +336,7 @@ export const PROBES: Question[] = [
   probe("p19", ["creative", "abstract"], "Designing an immersive escape room or museum exhibit", { creative: 0.9, abstract: 0.5, hands_on: 0.4 }),
   probe("p20", ["creative", "detail"], "Drawing precise illustrations of human anatomy for textbooks", { creative: 0.8, detail: 0.8, investigative: 0.4 }),
   probe("p21", ["words"], "Writing the short bits of text that guide people through an app", { words: 0.9, tech: 0.4, helping: 0.3 }),
-  probe("p22", ["words", "pressure"], "Captioning a live TV broadcast as it happens", { words: 0.8, pressure: 0.7, detail: 0.7 }),
+  probe("p22", ["words", "pressure"], "Captioning a live TV broadcast as it happens", { words: 0.8, pressure: 0.7, detail: 0.7 }, "stress"),
   probe("p23", ["words", "organizing"], "Digitizing and cataloging a collection of rare letters", { words: 0.5, organizing: 0.8, detail: 0.7, investigative: 0.4 }),
   probe("p24", ["helping"], "Using play to help a child get ready for surgery", { helping: 1, empathy: 0.8, creative: 0.3 }),
   probe("p25", ["helping", "creative"], "Using music or games as therapy for someone recovering from an injury", { helping: 0.9, creative: 0.5 }),
@@ -342,7 +346,7 @@ export const PROBES: Question[] = [
   probe("p29", ["persuading", "tech"], "Explaining a complex technical product to a buyer and closing the deal", { persuading: 0.8, tech: 0.6, social: 0.5 }),
   probe("p30", ["persuading", "leading"], "Representing an athlete or artist and negotiating their contract", { persuading: 0.9, leading: 0.4, pressure: 0.4 }),
   probe("p31", ["persuading", "empathy"], "Asking a wealthy donor to fund a cause you believe in", { persuading: 0.8, empathy: 0.5, social: 0.6 }),
-  probe("p32", ["pressure", "detail"], "Guiding dozens of airplanes safely through busy airspace", { pressure: 1, detail: 0.8, analytical: 0.4, structure: 0.5 }),
+  probe("p32", ["pressure", "detail"], "Being responsible for guiding dozens of airplanes safely through busy airspace", { pressure: 1, detail: 0.8, analytical: 0.4, structure: 0.5 }, "stress"),
   probe("p33", ["organizing", "detail"], "Inspecting a building's safety systems against code", { detail: 0.8, organizing: 0.6, mechanical: 0.3 }),
   probe("p34", ["organizing", "analytical"], "Estimating exactly what a construction project will cost", { analytical: 0.7, detail: 0.8, organizing: 0.5 }),
   probe("p35", ["animals"], "Caring for sharks and rays at a public aquarium", { animals: 1, nature: 0.5, hands_on: 0.4 }),
@@ -351,7 +355,7 @@ export const PROBES: Question[] = [
   probe("p38", ["nature", "creative"], "Drawing up plans to restore a damaged wetland", { nature: 0.8, creative: 0.5, analytical: 0.4 }),
   probe("p39", ["adrenaline", "physical"], "Parachuting into a remote forest to fight a wildfire", { adrenaline: 1, physical: 1, nature: 0.6 }),
   probe("p40", ["adrenaline", "mechanical"], "Repairing live high-voltage power lines after a storm", { adrenaline: 0.9, mechanical: 0.6, physical: 0.7 }),
-  probe("p41", ["helping", "pressure"], "Treating a patient in the back of a medical helicopter", { helping: 0.8, pressure: 1, adrenaline: 0.8 }),
+  probe("p41", ["helping", "pressure"], "Treating a patient in the back of a medical helicopter", { helping: 0.8, pressure: 1, adrenaline: 0.8 }, "stress"),
   probe("p42", ["adrenaline", "travel"], "Flying a small plane into remote wilderness airstrips", { adrenaline: 0.8, travel: 0.8, nature: 0.6, tech: 0.3 }),
   probe("p43", ["travel", "social"], "Leading a two-week expedition through Patagonia", { travel: 0.9, leading: 0.6, nature: 0.7, social: 0.5 }),
   probe("p44", ["travel", "analytical"], "Flying into a disaster zone to assess damage for insurance claims", { travel: 0.9, analytical: 0.5, helping: 0.4, pressure: 0.5 }),

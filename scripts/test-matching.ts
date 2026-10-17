@@ -95,7 +95,7 @@ for (const p of PERSONAS) {
   const strongest = DIM_KEYS.slice().sort((a, b) => profile.scores[b] - profile.scores[a]).slice(0, 4);
   console.log(`${ok ? "✓" : "✗"} ${p.name}  [${profile.type.letters}]  strongest: ${strongest.join(", ")}`);
   console.log(`   filtered ${result.filtered.removed}/${result.filtered.total}`);
-  for (const pm of result.paths) {
+  for (const pm of result.paths.slice(0, 5)) {
     console.log(`   ${String(pm.score).padStart(3)}  ${PATH_BY_ID.get(pm.path.id)!.name}: ${pm.careers.map((c) => `${c.career.title} (${c.score})`).join(", ")}`);
   }
   if (!ok) console.log(`   expected one of ${p.expectAnyOf.join(", ")} in top 3`);
@@ -105,7 +105,7 @@ for (const p of PERSONAS) {
 // Discovery dial should surface more obscure careers
 const sample = buildProfile(answerAll(PERSONAS[1]!));
 const avgObscurity = (d: number) => {
-  const tops = matchCareers(sample, d).paths.map((p) => p.careers[0]!.career.obscurity);
+  const tops = matchCareers(sample, d).paths.slice(0, 5).map((p) => p.careers[0]!.career.obscurity);
   return tops.reduce((a, b) => a + b, 0) / tops.length;
 };
 const familiar = avgObscurity(0), hidden = avgObscurity(2);
@@ -126,6 +126,13 @@ const floor = matchCareers(base, 1, { ...DEFAULT_FILTERS, minPay: 100000 });
 const floorOk = floor.paths.every((p) => p.careers.every((c) => c.career.pay >= 100000));
 const remote = matchCareers(base, 1, { ...DEFAULT_FILTERS, setup: "remote", commute: "home" });
 const remoteOk = remote.paths.every((p) => p.careers.every((c) => c.career.remote === 2 && c.career.travel < 2));
+const strict = matchCareers(base, 1, { ...DEFAULT_FILTERS, minMatch: 80 });
+const strictOk = strict.careers.every((c) => c.score >= 80) && strict.paths.every((p) => p.careers.every((c) => c.score >= 80));
+const everything = matchCareers(base, 1);
+const allOk = everything.careers.length === everything.paths.reduce((n, p) => n + p.careers.length, 0);
+console.log(`Min match 80%: ${strict.careers.length} careers ${strictOk ? "✓" : "✗"} · all ${everything.paths.length} paths returned ${allOk ? "✓" : "✗"}`);
+if (!strictOk || !allOk) failures++;
+
 console.log(`Filters: $100k floor ${floorOk ? "✓" : "✗"} · remote + home nightly ${remoteOk ? "✓" : "✗"}`);
 if (!floorOk || !remoteOk) failures++;
 

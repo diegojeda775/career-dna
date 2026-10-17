@@ -7,8 +7,8 @@ import { TOTAL_QUESTIONS } from "@/features/dna/questions";
 const PILLARS = [
   {
     icon: Gauge,
-    title: "Energy, not either/or",
-    body: "Instead of forced choices, rate how much real, specific tasks would energize or drain you.",
+    title: "Interest, not either/or",
+    body: "Instead of forced choices, rate how much real, specific tasks would intrigue you, or not.",
   },
   {
     icon: ShieldBan,
@@ -33,7 +33,7 @@ export default function Home() {
         </p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Find the career you didn't know existed</h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-          Career DNA works like a music recommendation engine. It learns what energizes you, builds your working-attribute
+          Career DNA works like a music recommendation engine. It learns what intrigues you, builds your working-attribute
           profile, and matches it to niche careers that share it, with real pay and growth data.
         </p>
         <div className="mt-8 flex justify-center">
