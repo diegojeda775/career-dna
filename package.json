@@ -9,21 +9,25 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "db:up": "docker compose up -d",
-    "db:push": "prisma db push",
+    "db:push": "prisma db push && prisma generate",
     "test:matching": "tsx scripts/test-matching.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.12.6",
-    "@prisma/client": "^6.5.0",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
     "@radix-ui/react-dropdown-menu": "^2.1.6",
     "@radix-ui/react-separator": "^1.1.2",
     "@radix-ui/react-slot": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^18.0.8",
     "lucide-react": "^0.483.0",
     "next": "^16.4.1",
     "next-themes": "^0.4.6",
+    "pg": "^8.23.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2",
@@ -34,11 +38,15 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "prisma": "^7.10.1",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }
