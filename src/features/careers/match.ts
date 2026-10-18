@@ -1,7 +1,10 @@
 import { DIM_KEYS, DIMENSIONS, dimDefault, type Dim, type DnaVector } from "@/features/dna/dimensions";
 import type { Profile } from "@/features/dna/profile";
-import { CAREERS, PATH_BY_ID } from "./data";
+import { CAREER_BY_ID, CAREERS, PATH_BY_ID } from "./data";
 import type { Career, CareerPath } from "./types";
+import { DEFAULT_FILTERS, type ResultFilters } from "./filters";
+
+export * from "./filters";
 
 export type CareerMatch = {
   career: Career;
@@ -15,6 +18,32 @@ export type PathMatch = {
   score: number;
   careers: CareerMatch[];
 };
+
+// Lightweight shapes for the results page; full details load when a career is opened
+export type CareerRow = {
+  id: string;
+  title: string;
+  path: string;
+  score: number;
+  pay: number;
+  growth: number;
+  hidden: boolean;
+};
+// Paths reference careers by id so each row is only sent once
+export type PathRow = { path: CareerPath; score: number; careerIds: string[] };
+
+export function toRow(m: CareerMatch): CareerRow {
+  const c = m.career;
+  return { id: c.id, title: c.title, path: c.path, score: m.score, pay: c.pay, growth: c.growth, hidden: c.obscurity >= 0.7 };
+}
+
+// Why a career fits (or doesn't) for one person, without the discovery-adjusted score
+export function explainCareer(profile: Profile, careerId: string) {
+  const career = CAREER_BY_ID.get(careerId);
+  if (!career) return null;
+  const { reasons, watchouts } = scoreCareer(profile, career);
+  return { career, reasons, watchouts };
+}
 
 export type MatchResult = {
   // Every path with at least one surviving career, best first (or by the chosen sort)
@@ -57,42 +86,6 @@ const FILTERS: { reason: string; fails: (c: Career, k: Profile["constraints"]) =
 // These are chosen on the results page rather than in the questionnaire, so people
 // can explore trade-offs (e.g. "what if I'd commute?") without retaking anything.
 
-export const SORTS = { match: "Best match", pay: "Highest pay", growth: "Fastest growth" } as const;
-export const SETUPS = {
-  any: "Any setup",
-  remote: "Remote-friendly",
-  hybrid: "At least some remote",
-  onsite: "On-site / out in the world",
-} as const;
-export const COMMUTES = { any: "Any travel", home: "Home every night", travel: "Travel-heavy" } as const;
-export const MIN_PAYS = [0, 40000, 60000, 80000, 100000] as const;
-export const MIN_MATCHES = [0, 50, 60, 70, 80, 90] as const;
-
-export type ResultFilters = {
-  sort: keyof typeof SORTS;
-  setup: keyof typeof SETUPS;
-  commute: keyof typeof COMMUTES;
-  minPay: number;
-  minMatch: number;
-};
-
-export const DEFAULT_FILTERS: ResultFilters = { sort: "match", setup: "any", commute: "any", minPay: 0, minMatch: 0 };
-
-const pick = <T extends string>(value: string | undefined, options: Record<T, string>, fallback: T) =>
-  value != null && value in options ? (value as T) : fallback;
-
-export function parseFilters(params: Record<string, string | undefined>): ResultFilters {
-  const minPay = Number(params.minPay);
-  const minMatch = Number(params.minMatch);
-  return {
-    sort: pick(params.sort, SORTS, "match"),
-    setup: pick(params.setup, SETUPS, "any"),
-    commute: pick(params.commute, COMMUTES, "any"),
-    minPay: (MIN_PAYS as readonly number[]).includes(minPay) ? minPay : 0,
-    minMatch: (MIN_MATCHES as readonly number[]).includes(minMatch) ? minMatch : 0,
-  };
-}
-
 const RESULT_FILTERS: { reason: string; fails: (c: Career, f: ResultFilters) => boolean }[] = [
   { reason: "Not remote-friendly", fails: (c, f) => f.setup === "remote" && c.remote < 2 },
   { reason: "No remote option", fails: (c, f) => f.setup === "hybrid" && c.remote < 1 },
@@ -131,7 +124,8 @@ function scoreCareer(profile: Profile, c: Career): CareerMatch {
   }
 
   const fit = fitDen ? fitNum / fitDen : 0.5;
-  const raw = fit + 2.2 * joy - 3 * drain;
+  // Shared energy has diminishing returns, so careers tagged on many attributes can't run away with it
+  const raw = fit + 0.45 * Math.tanh(joy / 0.2) - 3 * drain;
 
   const reasons = DIM_KEYS.filter((d) => u[d] > 0.6 && cv[d] >= 0.6)
     .sort((a, b) => u[b] * cv[b] - u[a] * cv[a])
@@ -213,6 +207,10 @@ export function matchCareers(
     });
     picked.push(pool.splice(bestIdx, 1)[0]!);
   }
+
+  // Diversity decides which paths make the top 5; within the top 5 and the rest, show best first
+  const byRaw = (x: (typeof picked)[number], y: (typeof picked)[number]) => y.raw - x.raw;
+  picked.splice(0, picked.length, ...picked.slice(0, 5).sort(byRaw), ...picked.slice(5).sort(byRaw));
 
   // Matching decides the default order; another sort just reorders
   const key = SORT_KEY[filters.sort];

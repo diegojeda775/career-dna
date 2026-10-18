@@ -12,7 +12,8 @@
     "db:push": "prisma db push && prisma generate",
     "test:matching": "tsx scripts/test-matching.ts",
     "postinstall": "prisma generate",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "data:import": "tsx scripts/import-careers.mts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.12.6",
@@ -42,6 +43,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "prisma": "^7.10.1",
+    "read-excel-file": "^9.3.12",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5"

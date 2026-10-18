@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { COMMUTES, DEFAULT_FILTERS, MIN_MATCHES, MIN_PAYS, SETUPS, SORTS, type ResultFilters } from "@/features/careers/match";
+import { COMMUTES, DEFAULT_FILTERS, MIN_MATCHES, MIN_PAYS, SETUPS, SORTS, type ResultFilters } from "@/features/careers/filters";
 
 const DISCOVERY = ["Familiar", "Balanced", "Hidden gems"];
 

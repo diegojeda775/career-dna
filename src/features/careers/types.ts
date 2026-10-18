@@ -33,6 +33,10 @@ export type Career = {
   // Parent BLS / O*NET occupation that supplies official statistics
   soc: string;
   socTitle: string;
+  // Exact O*NET-SOC code (e.g. "15-1299.08") when the career comes from the O*NET import
+  onetCode?: string;
+  // BLS Occupational Outlook Handbook page
+  oohUrl?: string;
   summary: string;
   tasks: string[];
   // Approximate national median annual pay for the parent occupation (USD)
@@ -56,10 +60,9 @@ export type Career = {
   dna: DnaWeights;
 };
 
-export const DATA_NOTE =
-  "Pay and outlook are approximate national figures for each career's parent occupation (BLS Occupational Employment & Wage Statistics, May 2023; Employment Projections 2023–33). Niche specialists can earn noticeably more or less than the parent median.";
 
 export function myNextMoveUrl(c: Career) {
+  if (c.onetCode) return `https://www.mynextmove.org/profile/summary/${c.onetCode}`;
   return `https://www.mynextmove.org/find/search?s=${encodeURIComponent(c.socTitle)}`;
 }
 

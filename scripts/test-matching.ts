@@ -5,13 +5,15 @@ import { CORE_QUESTIONS, QUESTION_BY_ID, TOTAL_QUESTIONS } from "@/features/dna/
 import { buildProfile, selectProbes, type Answers } from "@/features/dna/profile";
 import { matchCareers, type ResultFilters, DEFAULT_FILTERS } from "@/features/careers/match";
 import { CAREERS, PATH_BY_ID } from "@/features/careers/data";
+import type { FieldId } from "@/features/careers/types";
 
 type Persona = {
   name: string;
   traits: Partial<Record<Dim, number>>; // -1..1, unspecified = 0
   dealbreakers: Record<string, string>;
   filters?: Partial<ResultFilters>; // chosen on the results page
-  expectAnyOf: string[]; // path ids; at least one must appear in the top 3
+  // The top 3 paths must all sit in these fields (the catalog is too big to pin exact paths)
+  expectFields: FieldId[];
 };
 
 const PERSONAS: Persona[] = [
@@ -19,41 +21,41 @@ const PERSONAS: Persona[] = [
     name: "Thrill-seeking tradesperson",
     traits: { hands_on: 1, mechanical: 0.8, adrenaline: 1, physical: 0.9, travel: 0.6, nature: 0.4, abstract: -0.6, social: -0.2, words: -0.7, organizing: -0.5 },
     dealbreakers: { d_danger: "thrill", d_physical: "heavy", d_education: "2", d_schedule: "any" },
-    expectAnyOf: ["subsea", "energy", "response"],
+    expectFields: ["trades", "public", "agri", "transport"],
   },
   {
     name: "Introverted puzzle-solver who loves computers",
     traits: { tech: 1, investigative: 0.9, analytical: 0.7, social: -0.8, autonomy: 0.7, physical: -0.8, nature: -0.4, helping: -0.4, visibility: -0.7 },
     dealbreakers: { d_physical: "desk", d_danger: "none", d_education: "3" },
     filters: { setup: "hybrid" },
-    expectAnyOf: ["cyber", "forensic", "data"],
+    expectFields: ["tech", "science", "engineering", "public"],
   },
   {
     name: "Empathetic, creative helper",
     traits: { helping: 1, empathy: 1, creative: 0.7, social: 0.6, analytical: -0.6, mechanical: -0.6, adrenaline: -0.5, tech: -0.4 },
     dealbreakers: { d_danger: "none", d_medical: "ok", d_education: "3" },
-    expectAnyOf: ["therapy", "clinical", "deathcare"],
+    expectFields: ["health", "education", "hospitality"],
   },
   {
     name: "Outdoorsy animal lover",
     traits: { animals: 1, nature: 1, investigative: 0.5, physical: 0.4, tech: -0.6, persuading: -0.6, organizing: -0.4, social: -0.3 },
     dealbreakers: { d_outdoor: "outdoor" },
     filters: { setup: "onsite" },
-    expectAnyOf: ["wild", "animals"],
+    expectFields: ["agri", "science"],
   },
   {
     name: "Charismatic deal-maker",
     traits: { persuading: 1, social: 1, visibility: 0.8, leading: 0.7, variety: 0.6, detail: -0.6, organizing: -0.5, hands_on: -0.5, structure: -0.4 },
     dealbreakers: {},
     filters: { minPay: 60000 },
-    expectAnyOf: ["dealmaking", "teaching"],
+    expectFields: ["sales", "business", "education"],
   },
   {
     name: "Remote-only detail organizer",
     traits: { detail: 1, organizing: 1, structure: 0.9, social: -0.7, variety: -0.6, adrenaline: -0.8, creative: -0.3, physical: -0.8 },
     dealbreakers: { d_education: "2", d_physical: "desk", d_danger: "none" },
     filters: { setup: "remote" },
-    expectAnyOf: ["compliance", "words"],
+    expectFields: ["business", "health", "creative"],
   },
 ];
 
@@ -88,17 +90,17 @@ for (const p of PERSONAS) {
   const answers = answerAll(p);
   const profile = buildProfile(answers);
   const result = matchCareers(profile, 1, { ...DEFAULT_FILTERS, ...p.filters });
-  const top3 = result.paths.slice(0, 3).map((x) => x.path.id);
-  const ok = p.expectAnyOf.some((id) => top3.includes(id));
+  const top3 = result.paths.slice(0, 3).map((x) => x.path.field);
+  const ok = top3.length > 0 && top3.every((f) => p.expectFields.includes(f));
   if (!ok) failures++;
 
   const strongest = DIM_KEYS.slice().sort((a, b) => profile.scores[b] - profile.scores[a]).slice(0, 4);
   console.log(`${ok ? "✓" : "✗"} ${p.name}  [${profile.type.letters}]  strongest: ${strongest.join(", ")}`);
   console.log(`   filtered ${result.filtered.removed}/${result.filtered.total}`);
   for (const pm of result.paths.slice(0, 5)) {
-    console.log(`   ${String(pm.score).padStart(3)}  ${PATH_BY_ID.get(pm.path.id)!.name}: ${pm.careers.map((c) => `${c.career.title} (${c.score})`).join(", ")}`);
+    console.log(`   ${String(pm.score).padStart(3)}  ${PATH_BY_ID.get(pm.path.id)!.name}: ${pm.careers.slice(0, 4).map((c) => `${c.career.title} (${c.score})`).join(", ")}`);
   }
-  if (!ok) console.log(`   expected one of ${p.expectAnyOf.join(", ")} in top 3`);
+  if (!ok) console.log(`   expected top 3 paths in ${p.expectFields.join(", ")}; got ${top3.join(", ")}`);
   console.log();
 }
 
@@ -119,7 +121,7 @@ const byPay = matchCareers(base, 1, { ...DEFAULT_FILTERS, sort: "pay" });
 const pays = byPay.paths.map((p) => p.careers[0]!.career.pay);
 const samePaths = byMatch.paths.map((p) => p.path.id).sort().join() === byPay.paths.map((p) => p.path.id).sort().join();
 const sortedDesc = pays.every((v, i) => i === 0 || pays[i - 1]! >= v);
-console.log(`Sort by pay: ${pays.map((v) => `$${Math.round(v / 1000)}k`).join(" > ")} ${samePaths && sortedDesc ? "✓" : "✗"}`);
+console.log(`Sort by pay: ${pays.slice(0, 6).map((v) => `$${Math.round(v / 1000)}k`).join(" > ")} … ${samePaths && sortedDesc ? "✓" : "✗"}`);
 if (!samePaths || !sortedDesc) failures++;
 
 const floor = matchCareers(base, 1, { ...DEFAULT_FILTERS, minPay: 100000 });

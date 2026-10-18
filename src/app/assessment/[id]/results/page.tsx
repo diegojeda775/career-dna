@@ -5,8 +5,8 @@ import { requireDbUser } from "@/features/user/db";
 import { Button } from "@/components/ui/button";
 import { DIMENSIONS, DIM_KEYS } from "@/features/dna/dimensions";
 import { buildProfile } from "@/features/dna/profile";
-import { matchCareers, parseFilters } from "@/features/careers/match";
-import { DATA_NOTE } from "@/features/careers/types";
+import { matchCareers, parseFilters, toRow } from "@/features/careers/match";
+import { DataNote } from "@/features/careers/DataNote";
 import { sanitizeAnswers } from "@/features/assessment/sequence";
 import { retakeAssessment } from "@/features/assessment/actions";
 import { DnaChart, WorkType } from "@/features/results/components";
@@ -119,9 +119,13 @@ export default async function ResultsPage({
             No careers survive every dealbreaker and filter. Try loosening a filter above.
           </p>
         ) : (
-          <ResultsExplorer paths={result.paths} careers={result.careers} />
+          <ResultsExplorer
+            assessmentId={assessment.id}
+            paths={result.paths.map((p) => ({ path: p.path, score: p.score, careerIds: p.careers.map((c) => c.career.id) }))}
+            careers={result.careers.map(toRow)}
+          />
         )}
-        <p className="mt-6 text-xs text-muted-foreground">{DATA_NOTE}</p>
+        <DataNote className="mt-6" />
       </section>
     </div>
   );

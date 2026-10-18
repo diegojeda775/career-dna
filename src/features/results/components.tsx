@@ -167,13 +167,13 @@ export function CareerFull({ match }: { match: CareerMatch }) {
           <a href={myNextMoveUrl(c)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
             My Next Move <ArrowUpRight className="size-3.5" />
           </a>
-          <a href={blsUrl(c)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
-            BLS wage data <ArrowUpRight className="size-3.5" />
+          <a href={c.oohUrl ?? blsUrl(c)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+            {c.oohUrl ? "BLS Occupational Outlook" : "BLS wage data"} <ArrowUpRight className="size-3.5" />
           </a>
         </div>
         <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
           <Briefcase className="mt-0.5 size-3.5 shrink-0" />
-          Stats from parent occupation: {c.socTitle} (SOC {c.soc})
+          {c.onetCode ? `O*NET ${c.onetCode}` : `Stats from parent occupation: ${c.socTitle}`} (SOC {c.soc})
         </p>
       </div>
     </div>

@@ -392,7 +392,7 @@ export const GENERAL_CAREERS: Career[] = [
 
   // ───────── Office & Customer Support
   career({
-    id: "admin-assistant", title: "Administrative Assistant", path: "office", soc: "43-6014", socTitle: "Secretaries and Administrative Assistants",
+    id: "admin-assistant", title: "Administrative Assistant", path: "office", soc: "43-6014", socTitle: "Secretaries and Administrative Assistants, Except Legal, Medical, and Executive",
     summary: "Keep an office organized by managing schedules, documents, communications and the hundred small tasks in between.",
     tasks: ["Manage calendars and travel", "Prepare documents", "Answer calls and emails"],
     pay: 44080, growth: -9, education: "None; learn on the job", eduLevel: 0,
@@ -450,7 +450,7 @@ export const GENERAL_CAREERS: Career[] = [
     dna: { persuading: 0.85, creative: 0.7, leading: 0.7, analytical: 0.55, social: 0.6 },
   }),
   career({
-    id: "sales-rep", title: "Sales Representative", path: "marketing", soc: "41-4012", socTitle: "Sales Representatives, Wholesale and Manufacturing",
+    id: "sales-rep", title: "Sales Representative", path: "marketing", soc: "41-4012", socTitle: "Sales Representatives, Wholesale and Manufacturing, Except Technical and Scientific Products",
     summary: "Sell products to businesses, building relationships and closing deals.",
     tasks: ["Prospect and meet clients", "Demo products and negotiate", "Hit sales targets"],
     pay: 66780, growth: 1, education: "None to bachelor's; commission-driven", eduLevel: 0,

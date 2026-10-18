@@ -1,7 +1,7 @@
 import { SignUpButton } from "@clerk/nextjs";
 import { Compass, Gauge, ShieldBan } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CAREERS, PATHS } from "@/features/careers/data";
+import { CAREERS, DATA_SOURCES, PATHS } from "@/features/careers/data";
 import { TOTAL_QUESTIONS } from "@/features/dna/questions";
 
 const PILLARS = [
@@ -61,8 +61,8 @@ export default function Home() {
       </section>
 
       <p className="text-center text-xs text-muted-foreground">
-        Question design draws on the COPS interest system and Myers-Briggs-style preferences. Career data is based on
-        O*NET and the U.S. Bureau of Labor Statistics.
+        Question design draws on the COPS interest system and Myers-Briggs-style preferences. Career data comes from the
+        O*NET {DATA_SOURCES.onetVersion} database (USDOL/ETA, CC BY 4.0) and U.S. Bureau of Labor Statistics projections.
       </p>
     </div>
   );
