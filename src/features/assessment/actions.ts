@@ -3,22 +3,31 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireDbUser } from "@/features/user/db";
+import { deleteStaleGuestAssessments, findOwnedAssessment, guestStartAllowed, ownerForNewAssessment } from "./access";
 import { buildProfile } from "@/features/dna/profile";
 import { matchCareers } from "@/features/careers/match";
 import { CORE_QUESTIONS, PROBE_COUNT } from "@/features/dna/questions";
 import { isValidProbeSet, questionSequence, sanitizeAnswers } from "./sequence";
 
 async function ownAssessment(id: string) {
-  const user = await requireDbUser();
-  const assessment = await prisma.assessment.findFirst({ where: { id, userId: user.id } });
+  const assessment = await findOwnedAssessment(id);
   if (!assessment) throw new Error("Assessment not found");
   return assessment;
 }
 
+// Works with or without an account. Guests resume their unfinished assessment instead of piling up new ones.
 export async function startAssessment() {
-  const user = await requireDbUser();
-  const assessment = await prisma.assessment.create({ data: { userId: user.id } });
+  const owner = await ownerForNewAssessment();
+  if ("guestToken" in owner) {
+    const existing = await prisma.assessment.findFirst({
+      where: { guestToken: owner.guestToken, userId: null, status: "IN_PROGRESS" },
+      orderBy: { updatedAt: "desc" },
+    });
+    if (existing) redirect(`/assessment/${existing.id}`);
+    if (!(await guestStartAllowed())) throw new Error("Too many new assessments. Try again in an hour.");
+    await deleteStaleGuestAssessments();
+  }
+  const assessment = await prisma.assessment.create({ data: owner });
   redirect(`/assessment/${assessment.id}`);
 }
 
@@ -90,6 +99,8 @@ export async function retakeAssessment(id: string) {
   const answers = sanitizeAnswers(source.answers);
   // Keep only the core answers; the deep dive is re-chosen from the new answers
   const core = Object.fromEntries(CORE_QUESTIONS.filter((q) => q.id in answers).map((q) => [q.id, answers[q.id] ?? null]));
-  const copy = await prisma.assessment.create({ data: { userId: source.userId, answers: core } });
+  const copy = await prisma.assessment.create({
+    data: { userId: source.userId, guestToken: source.guestToken, answers: core },
+  });
   redirect(`/assessment/${copy.id}`);
 }

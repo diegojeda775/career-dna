@@ -50,6 +50,10 @@ npm run dev
 
 Copy `.env.example` to `.env` and fill in your Clerk keys. Users are created in the database automatically on first sign-in, so no webhook is needed.
 
+### Accounts are optional
+
+Anyone can take the assessment and see their results without signing in (`src/features/assessment/access.ts`). A guest's assessments are tied to a random token in an httpOnly cookie, and only its SHA-256 hash is stored. When a guest signs up or signs in on the same browser, their assessments move onto the account. Unclaimed guest assessments are deleted after 30 days of inactivity (checked whenever a guest starts a new one). Starting guest assessments is also rate limited per IP, but only in memory, so add your host's rate limiting in production.
+
 ## Checks
 
 ```bash

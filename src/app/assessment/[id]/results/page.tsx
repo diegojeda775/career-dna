@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { Filter, RotateCcw } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import { requireDbUser } from "@/features/user/db";
+import { findOwnedAssessment } from "@/features/assessment/access";
 import { Button } from "@/components/ui/button";
 import { DIMENSIONS, DIM_KEYS } from "@/features/dna/dimensions";
 import { buildProfile } from "@/features/dna/profile";
@@ -12,6 +11,7 @@ import { retakeAssessment } from "@/features/assessment/actions";
 import { DnaChart, WorkType } from "@/features/results/components";
 import { ResultsExplorer } from "@/features/results/ResultsExplorer";
 import { ResultsControls } from "@/features/results/ResultsControls";
+import { SaveResultsBanner } from "@/features/results/SaveResultsBanner";
 
 export default async function ResultsPage({
   params,
@@ -21,8 +21,7 @@ export default async function ResultsPage({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const user = await requireDbUser();
-  const assessment = await prisma.assessment.findFirst({ where: { id, userId: user.id } });
+  const assessment = await findOwnedAssessment(id);
   if (!assessment) notFound();
   if (assessment.status !== "COMPLETED") redirect(`/assessment/${id}`);
 
@@ -67,6 +66,8 @@ export default async function ResultsPage({
           </Button>
         </form>
       </header>
+
+      {!assessment.userId && <SaveResultsBanner returnTo={`/assessment/${assessment.id}/results`} />}
 
       <section className="grid gap-6 lg:grid-cols-[1fr_280px]">
         <div className="rounded-xl border bg-card p-5 shadow-sm">

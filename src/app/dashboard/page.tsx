@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireDbUser } from "@/features/user/db";
+import { redirect } from "next/navigation";
+import { getViewer } from "@/features/assessment/access";
 import { Button } from "@/components/ui/button";
 import { startAssessment } from "@/features/assessment/actions";
 import { DeleteAssessmentButton } from "@/features/assessment/components/DeleteAssessmentButton";
@@ -11,7 +12,9 @@ type ResultsSnapshot = { paths: { id: string; name: string; score: number; topCa
 type ProfileSnapshot = { type: string };
 
 export default async function DashboardPage() {
-  const user = await requireDbUser();
+  // Also pulls in anything they took as a guest on this browser before signing in
+  const { user } = await getViewer();
+  if (!user) redirect("/sign-in");
   const assessments = await prisma.assessment.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },

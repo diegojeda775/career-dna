@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
+import { SignUpButton } from "@clerk/nextjs";
 import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,11 +17,12 @@ type Props = {
   initialAnswers: Answers;
   initialPosition: number;
   initialProbeIds: string[];
+  isGuest: boolean;
 };
 
 const SCALE_VALUES = [-2, -1, 0, 1, 2] as const;
 
-export function Questionnaire({ assessmentId, initialAnswers, initialPosition, initialProbeIds }: Props) {
+export function Questionnaire({ assessmentId, initialAnswers, initialPosition, initialProbeIds, isGuest }: Props) {
   const [answers, setAnswers] = useState<Answers>(initialAnswers);
   const [probeIds, setProbeIds] = useState<string[]>(initialProbeIds);
   const [index, setIndex] = useState(initialPosition);
@@ -129,7 +131,7 @@ export function Questionnaire({ assessmentId, initialAnswers, initialPosition, i
           <span className="flex items-center gap-1.5">
             {saveState === "saving" && <Loader2 className="size-3.5 animate-spin" />}
             {saveState === "saved" && <Check className="size-3.5" />}
-            {saveState === "saving" ? "Saving" : saveState === "saved" ? "Saved" : "Unsaved"}
+            {saveState === "saving" ? "Saving" : saveState === "saved" ? (isGuest ? "Saved in this browser" : "Saved") : "Unsaved"}
           </span>
         </div>
         <div
@@ -186,6 +188,17 @@ export function Questionnaire({ assessmentId, initialAnswers, initialPosition, i
         Tip: use keys {question.kind === "choice" ? "A–E" : "1–5"} to answer, Enter for next and Backspace to go back.
         Progress saves automatically.
       </p>
+      {isGuest && (
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          Want to continue on another device?{" "}
+          <SignUpButton forceRedirectUrl={`/assessment/${assessmentId}`} signInForceRedirectUrl={`/assessment/${assessmentId}`}>
+            {/* Clerk awaits this before leaving, so the latest answers are saved first */}
+            <button className="underline underline-offset-2 hover:text-foreground" onClick={flush}>
+              Create a free account
+            </button>
+          </SignUpButton>
+        </p>
+      )}
     </div>
   );
 }

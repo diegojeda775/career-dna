@@ -1,8 +1,8 @@
-import { SignUpButton } from "@clerk/nextjs";
 import { Compass, Gauge, ShieldBan } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CAREERS, DATA_SOURCES, PATHS } from "@/features/careers/data";
 import { TOTAL_QUESTIONS } from "@/features/dna/questions";
+import { startAssessment } from "@/features/assessment/actions";
 
 const PILLARS = [
   {
@@ -36,11 +36,10 @@ export default function Home() {
           Career DNA works like a music recommendation engine. It learns what intrigues you, builds your working-attribute
           profile, and matches it to niche careers that share it, with real pay and growth data.
         </p>
-        <div className="mt-8 flex justify-center">
-          <SignUpButton>
-            <Button size="lg">Start free assessment</Button>
-          </SignUpButton>
-        </div>
+        <form action={startAssessment} className="mt-8 flex flex-col items-center gap-2">
+          <Button size="lg">Start free assessment</Button>
+          <p className="text-sm text-muted-foreground">No account needed. Make one at the end to keep your results.</p>
+        </form>
         <ul className="mt-8 flex flex-wrap justify-center gap-2">
           {EXAMPLES.map((e) => (
             <li key={e} className="rounded-full border px-3 py-1 text-sm text-muted-foreground">

@@ -2,11 +2,11 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
-// Find (or lazily create) the database user for the signed-in Clerk account.
+// Find (or lazily create) the database user for the signed-in Clerk account, or null for guests.
 // Creating on first visit means no webhook setup is needed.
-export async function requireDbUser() {
+export async function getDbUser() {
   const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  if (!userId) return null;
 
   const existing = await prisma.user.findUnique({ where: { clerkId: userId } });
   if (existing) return existing;
@@ -21,4 +21,10 @@ export async function requireDbUser() {
       name: [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(" ") || null,
     },
   });
+}
+
+export async function requireDbUser() {
+  const user = await getDbUser();
+  if (!user) redirect("/sign-in");
+  return user;
 }

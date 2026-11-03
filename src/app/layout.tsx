@@ -14,10 +14,22 @@ export const metadata: Metadata = {
   description: "Discover careers you didn't know existed, matched to how you're wired.",
 };
 
+const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
+        {ADSENSE_CLIENT && (
+          <head>
+            {/* AdSense also shows Google's consent message (set up in its Privacy & messaging tab) */}
+            <script
+              async
+              src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+              crossOrigin="anonymous"
+            />
+          </head>
+        )}
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <div className="min-h-screen">

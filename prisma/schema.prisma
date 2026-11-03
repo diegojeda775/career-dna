@@ -26,7 +26,10 @@ enum AssessmentStatus {
 
 model Assessment {
   id          String           @id @default(cuid())
-  userId      String
+  // Null while taken as a guest; set when the guest signs up or signs in
+  userId      String?
+  // SHA-256 of the guest's cookie token. Cleared once the assessment is claimed by an account
+  guestToken  String?
   status      AssessmentStatus @default(IN_PROGRESS)
   // { [questionId]: number | string | null }
   answers     Json             @default("{}")
@@ -41,7 +44,9 @@ model Assessment {
   updatedAt   DateTime         @updatedAt
   completedAt DateTime?
 
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([guestToken])
+  @@index([updatedAt])
 }
